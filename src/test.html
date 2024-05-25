@@ -1,0 +1,141 @@
+import React, { useState, useEffect } from 'react';
+import api from './api';
+import './scrollbar.css';
+
+const App = () => {
+  const [transactions, setTransactions] = useState([]);
+  const [fromData, setFromData] = useState({
+    amount: '',
+    category: '',
+    date: '',
+    description: '',
+    is_income: false,
+  });
+
+  const fetchTransactions = async () => {
+    const response = await api.get('/transactions/');
+    setTransactions(response.data);
+  };
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const handleInputChange = (event) => {
+    const value = event.target.value === 'checkbox' ? event.target.checked : event.target.value;
+    setFromData({ ...fromData, [event.target.name]: value });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const response = await api.post('/transactions/', fromData);
+    setTransactions([...transactions, response.data]);
+    setFromData({
+      amount: '',
+      category: '',
+      date: '',
+      description: '',
+      is_income: false,
+    });
+  };
+
+  return (
+
+    // верхняя менюшка
+    
+    <div style={{ backgroundColor: '#424769', minHeight: '100vh' }}>
+  <nav class="navbar navbar-dark" style={{ backgroundColor: '#2D3250' }}>
+    <div className='container-fluid'>
+      <a className='navbar-brand' href='#'>
+        CashFlow
+      </a>
+    </div>
+  </nav>
+
+  {/* Блок для добавления транзакций и блок с историей транзакций */}
+  <div className='container'>
+    <div className='row'>
+      {/* Блок для добавления транзакций */}
+      <div className='col-12 col-md-4 mx-auto my-2'>
+        <div className='transaction-block border rounded-3 p-4 mt-3' style={{ height: '570px' }}>
+          <h2 className='text-white mb-3'>Добавить транзакцию</h2>
+          <form onSubmit={handleSubmit}>
+            <div className='mb-3'>
+              <label htmlFor='amount' className='form-label' style={{ color: 'white' }}>
+                Amount
+              </label>
+              <input type='text' className='form-control' id='amount' name='amount' value={fromData.amount} onChange={handleInputChange} />
+            </div>
+            <div className='mb-3'>
+                  <label htmlFor='category' className='form-label' style={{ color: 'white' }}>
+                    Category
+                  </label>
+                  <input type='text' className='form-control' id='category' name='category' value={fromData.category} onChange={handleInputChange} />
+                </div>
+
+                <div className='mb-3'>
+                  <label htmlFor='description' className='form-label' style={{ color: 'white' }}>
+                    Description
+                  </label>
+                  <input type='text' className='form-control' id='description' name='description' value={fromData.description} onChange={handleInputChange} />
+                </div>
+
+                <div className='mb-3'>
+                  <div className='form-check'>
+                    <input type='checkbox' className='form-check-input' id='is_income' name='is_income' checked={fromData.is_income} onChange={handleInputChange} />
+                    <label className='form-check-label' htmlFor='is_income' style={{ color: 'white' }}>
+                      Income?
+                    </label>
+                  </div>
+                </div>
+
+                <div className='mb-3'>
+                  <label htmlFor='date' className='form-label' style={{ color: 'white' }}>
+                    Date
+                  </label>
+                  <input type='text' className='form-control' id='date' name='date' value={fromData.date} onChange={handleInputChange} />
+                </div>
+            <button type='submit' className='btn btn-light' style={{ backgroundColor: '#FDBF50' }}>
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* Блок с историей транзакций */}
+      <div className='col-12 col-md-6 mx-auto my-2'>
+        <div className='transaction-block border rounded-3 p-4 mt-3' style={{ height: '570px' }}>
+          <h2 className='text-white mb-3'>История транзакций</h2>
+          <div className="table-responsive" style={{ maxHeight: '90%', overflowY: 'auto' }}>
+            <table className='table table-striped table-bordered table-hover mt-3'>
+              <thead>
+                <tr style={{ color: 'white' }}>
+                  <th>Amount</th>
+                  <th>Category</th>
+                  {/* <th>Description</th> */}
+                  <th>Income?</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((transaction) => (
+                  <tr key={transaction.id} style={{ color: 'white' }}>
+                    <td>{transaction.amount}</td>
+                    <td>{transaction.category}</td>
+                    {/* <td>{transaction.description}</td> */}
+                    <td>{transaction.is_income ? 'Yes' : 'No'}</td>
+                    <td>{transaction.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  )
+}
+
+export default App;

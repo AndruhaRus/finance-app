@@ -1,0 +1,16 @@
+.table-responsive::-webkit-scrollbar {
+    width: 8px; /* Ширина скроллбара */
+  }
+  
+  .table-responsive::-webkit-scrollbar-track {
+    background-color: #424769; /* Цвет фона скроллбара */
+  }
+  
+  .table-responsive::-webkit-scrollbar-thumb {
+    background-color: #2D3250; /* Цвет ползунка скроллбара */
+    border-radius: 20px; /* Радиус закругления ползунка */
+  }
+  
+  .table-responsive::-webkit-scrollbar-thumb:hover {
+    background-color: #424769; /* Цвет ползунка при наведении */
+  }
