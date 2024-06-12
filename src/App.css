@@ -36,3 +36,25 @@
     transform: rotate(360deg);
   }
 }
+
+.dataCard {
+  background-color: #efefef;
+  border-radius: 0.5em;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  padding: 1em;
+}
+
+.revenueCard {
+  width: 92%;
+  height: 20rem;
+}
+
+.customerCard {
+  width: 50%;
+  height: 20rem;
+}
+
+.categoryCard {
+  width: 40%;
+  height: 20rem;
+}

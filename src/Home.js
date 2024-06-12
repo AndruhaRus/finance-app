@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from './api';
 import './scrollbar.css';
-import { Doughnut } from 'react-chartjs-2';
+import { Doughnut, Bar } from 'react-chartjs-2';
 import Chart from 'chart.js/auto';
+import "./App.css";
 
 const Home = () => {
   const [expensesByCategory, setExpensesByCategory] = useState({});
@@ -17,7 +18,11 @@ const Home = () => {
   const [userId, setUserId] = useState(null);
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
+  const [monthlyTransactions, setMonthlyTransactions] = useState({ income: [], expenses: [] });
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // Default to current month
 
+  const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  
   useEffect(() => {
     const categoriesMap = categories.reduce((map, category) => {
       map[category.id] = category.name;
@@ -79,8 +84,41 @@ const Home = () => {
     if (userId) {
       fetchExpensesByCategory();
       fetchTransactions();
+      // fetchMonthlyTransactions();
     }
   }, [userId]);
+
+  useEffect(() => {
+    const fetchMonthlyTransactions = async () => {
+      const userId = localStorage.getItem('user_id');
+      if (userId) {
+        try {
+          const response = await api.get('/get_monthly_transactions/', {
+            params: { user_id: userId, month: selectedMonth + 1 }, // Months are 1-12 in backend
+          });
+          const transactions = response.data;
+          const income = [];
+          const expenses = [];
+
+          transactions.forEach(transaction => {
+            if (transaction.is_income) {
+              income.push(transaction.amount);
+            } else {
+              expenses.push(transaction.amount);
+            }
+          });
+
+          setMonthlyTransactions({ income, expenses });
+        } catch (error) {
+          console.error('Error fetching monthly transactions:', error);
+        }
+      }
+    };
+
+    if (userId) {
+      fetchMonthlyTransactions();
+    }
+  }, [selectedMonth, userId]);
 
   const handleInputChange = (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
@@ -132,26 +170,63 @@ const Home = () => {
           headers: { 'X-User-ID': userId }
         });
         setExpensesByCategory(response.data);
+        // Также обновите данные для диаграммы "Доходы и расходы" 
+        fetchMonthlyTransactions(); // Вызовите функцию обновления диаграммы Доходы и Расходы
       } catch (error) {
         console.error('Error updating chart data:', error);
       }
     }
   };
 
+  const fetchMonthlyTransactions = async () => {
+    const userId = localStorage.getItem('user_id');
+    if (userId) {
+      try {
+        const response = await api.get('/get_monthly_transactions/', {
+          params: { user_id: userId, month: selectedMonth + 1 }, // Months are 1-12 in backend
+        });
+        const transactions = response.data;
+        const income = [];
+        const expenses = [];
+
+        transactions.forEach(transaction => {
+          if (transaction.is_income) {
+            income.push(transaction.amount);
+          } else {
+            expenses.push(transaction.amount);
+          }
+        });
+
+        setMonthlyTransactions({ income, expenses });
+      } catch (error) {
+        console.error('Error fetching monthly transactions:', error);
+      }
+    }
+  };
+
+  // Обновление диаграммы Доходы и расходы при изменении выбранного месяца
+  useEffect(() => {
+    fetchMonthlyTransactions(); // Вызывайте fetchMonthlyTransactions при изменении selectedMonth
+  }, [selectedMonth]);
+
   return (
-    <div style={{ backgroundColor: '#242b47', minHeight: '150vh' }}>
-        <nav class="navbar navbar-dark" style={{ backgroundColor: '#181f38' }}>
+    <div style={{ backgroundColor: '#424769', minHeight: '150vh' }}>
+      <nav className="navbar navbar-dark" style={{ backgroundColor: '#2D3250' }}>
         <div className='container-fluid'>
-        <a className='navbar-brand' href='google.com'>
-            CashFlow
-        </a>
+          <a className='navbar-brand' href='google.com' style={{ fontSize: "30px" }}>
+            <span style={{ color: '#FDBF50' }}>Cash</span>Flow
+          </a>
+          <a className='navbar-brand' href='google.com'>
+            Logout
+            <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="Logo" width="30" height="30" className="d-inline-block align-text-top" style={{ marginLeft: '10px' }} />
+          </a>
         </div>
-    </nav>
+      </nav>
       <div className="container">
         <div className="row">
           <div className="col-12 col-md-6 mx-auto my-2">
-            <div className="transaction-block border rounded-3 p-3 mt-3" style={{ height: '570px' }}>
-              <h2 className="text-white mb-3">Добавить транзакцию</h2>
+            <div className="transaction-block rounded-3 p-3 mt-3" style={{ height: '570px', backgroundColor: '#2D3250' }}>
+              <h2 className="text-white mb-3" style={{ textAlign: 'center' }}>Добавить транзакцию</h2><hr style={{ backgroundColor: '#FFFFFF', height: '2px' }}></hr>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
                   <label htmlFor="amount" className="form-label" style={{ color: 'white' }}>
@@ -195,8 +270,8 @@ const Home = () => {
             </div>
           </div>
           <div className="col-12 col-md-6 mx-auto my-2">
-            <div className="transaction-block border rounded-3 p-3 mt-3" style={{ height: '570px' }}>
-              <h2 className="text-white mb-3">История транзакций</h2>
+            <div className="transaction-block rounded-3 p-3 mt-3" style={{ height: '570px', backgroundColor: '#2D3250' }}>
+              <h2 className="text-white mb-3" style={{ textAlign: 'center' }}>История транзакций</h2><hr style={{ backgroundColor: '#FFFFFF', height: '2px' }}></hr>
               <div className="table-responsive" style={{ maxHeight: '90%', overflowY: 'auto' }}>
                 <table className="table table-striped table-bordered table-hover mt-3">
                   <thead>
@@ -222,15 +297,48 @@ const Home = () => {
             </div>
           </div>
           <div className="col-12 col-md-6 mx-auto my-2">
-            <div className="transaction-block border rounded-3 p-4 mt-3" style={{ height: '570px' }}>
-              <h2 className="text-white mb-3">Сферы затрат</h2>
+            <div className="transaction-block rounded-3 p-4 mt-3" style={{ height: '570px', backgroundColor: '#2D3250' }}>
+              <h2 className="text-white mb-3" style={{ textAlign: 'center' }}>Доходы и расходы</h2><hr style={{ backgroundColor: '#FFFFFF', height: '2px' }}></hr>
+              {/* <div className="d-flex justify-content-center">
+                <select className="form-select mb-3" value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
+                  {months.map((month, index) => (
+                    <option key={index} value={index}>{month}</option>
+                  ))}
+                </select>
+              </div> */}
+              <div className="d-flex justify-content-center" style={{ maxWidth: '100%', maxHeight: '400px' }}>
+                <Bar
+                  data={{
+                    labels: ['Доходы и расходы'],
+                    datasets: [
+                      {
+                        label: 'Доходы',
+                        data: [monthlyTransactions.income.reduce((a, b) => a + b, 0)], // Sum of income
+                        backgroundColor: '#900F8C'
+                      },
+                      {
+                        label: 'Расходы',
+                        data: [monthlyTransactions.expenses.reduce((a, b) => a + b, 0)], // Sum of expenses
+                        backgroundColor: '#11DCC4'
+                      }
+                    ]
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="col-12 col-md-6 mx-auto my-2">
+            <div className="transaction-block rounded-3 p-4 mt-3" style={{ height: '570px', backgroundColor: '#2D3250' }}>
+              <h2 className="text-white mb-3" style={{ textAlign: 'center' }}>Сферы затрат</h2><hr style={{ backgroundColor: '#FFFFFF', height: '2px' }}></hr>
               <div className="d-flex justify-content-center" style={{ maxWidth: '100%', maxHeight: '400px' }}>
                 <Doughnut data={{
                   labels: Object.keys(expensesByCategory),
                   datasets: [{
                     data: Object.values(expensesByCategory),
-                    backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#8A2BE2', '#00FF7F'],
-                    hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#8A2BE2', '#00FF7F']
+                    backgroundColor: ['#0AFB60', '#9D00C6', '#F04579', '#00FFED', '#FFE031'],
+                    borderRadius: 10,
+
+                    hoverBackgroundColor: ['#0AFB60', '#9D00C6', '#F04579', '#00FFED', '#FFE031']
                   }]
                 }} />
               </div>
@@ -243,4 +351,3 @@ const Home = () => {
 };
 
 export default Home;
-
