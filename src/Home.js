@@ -19,10 +19,11 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
   const [monthlyTransactions, setMonthlyTransactions] = useState({ income: [], expenses: [] });
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // Default to current month
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedCategoryName, setSelectedCategoryName] = useState(''); // New state for selected category name
 
   const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-  
+
   useEffect(() => {
     const categoriesMap = categories.reduce((map, category) => {
       map[category.id] = category.name;
@@ -84,7 +85,6 @@ const Home = () => {
     if (userId) {
       fetchExpensesByCategory();
       fetchTransactions();
-      // fetchMonthlyTransactions();
     }
   }, [userId]);
 
@@ -94,7 +94,7 @@ const Home = () => {
       if (userId) {
         try {
           const response = await api.get('/get_monthly_transactions/', {
-            params: { user_id: userId, month: selectedMonth + 1 }, // Months are 1-12 in backend
+            params: { user_id: userId, month: selectedMonth + 1 }, 
           });
           const transactions = response.data;
           const income = [];
@@ -126,6 +126,7 @@ const Home = () => {
       const selectedCategory = categories.find(category => category.name === value);
       if (selectedCategory) {
         setFormData({ ...formData, category_id: selectedCategory.id });
+        setSelectedCategoryName(selectedCategory.name); // Update selected category name
       }
     } else {
       setFormData({ ...formData, [event.target.name]: value });
@@ -154,6 +155,7 @@ const Home = () => {
           description: '',
           is_income: false,
         });
+        setSelectedCategoryName(''); // Reset selected category name
         await updateChartData();
       } catch (error) {
         console.error('Error adding transaction:', error);
@@ -170,8 +172,7 @@ const Home = () => {
           headers: { 'X-User-ID': userId }
         });
         setExpensesByCategory(response.data);
-        // Также обновите данные для диаграммы "Доходы и расходы" 
-        fetchMonthlyTransactions(); // Вызовите функцию обновления диаграммы Доходы и Расходы
+        fetchMonthlyTransactions(); 
       } catch (error) {
         console.error('Error updating chart data:', error);
       }
@@ -183,7 +184,7 @@ const Home = () => {
     if (userId) {
       try {
         const response = await api.get('/get_monthly_transactions/', {
-          params: { user_id: userId, month: selectedMonth + 1 }, // Months are 1-12 in backend
+          params: { user_id: userId, month: selectedMonth + 1 }, 
         });
         const transactions = response.data;
         const income = [];
@@ -204,9 +205,8 @@ const Home = () => {
     }
   };
 
-  // Обновление диаграммы Доходы и расходы при изменении выбранного месяца
   useEffect(() => {
-    fetchMonthlyTransactions(); // Вызывайте fetchMonthlyTransactions при изменении selectedMonth
+    fetchMonthlyTransactions();
   }, [selectedMonth]);
 
   return (
@@ -238,7 +238,7 @@ const Home = () => {
                   <label htmlFor="category" className="form-label" style={{ color: 'white' }}>
                     Категория
                   </label>
-                  <select className="form-select" id="category" name="category" value={formData.category_id} onChange={handleInputChange}>
+                  <select className="form-select" id="category" name="category" value={selectedCategoryName} onChange={handleInputChange}>
                     <option value="">Выберите категорию</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.name}>{category.name}</option>
@@ -299,13 +299,6 @@ const Home = () => {
           <div className="col-12 col-md-6 mx-auto my-2">
             <div className="transaction-block rounded-3 p-4 mt-3" style={{ height: '570px', backgroundColor: '#2D3250' }}>
               <h2 className="text-white mb-3" style={{ textAlign: 'center' }}>Доходы и расходы</h2><hr style={{ backgroundColor: '#FFFFFF', height: '2px' }}></hr>
-              {/* <div className="d-flex justify-content-center">
-                <select className="form-select mb-3" value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
-                  {months.map((month, index) => (
-                    <option key={index} value={index}>{month}</option>
-                  ))}
-                </select>
-              </div> */}
               <div className="d-flex justify-content-center" style={{ maxWidth: '100%', maxHeight: '400px' }}>
                 <Bar
                   data={{
@@ -313,12 +306,12 @@ const Home = () => {
                     datasets: [
                       {
                         label: 'Доходы',
-                        data: [monthlyTransactions.income.reduce((a, b) => a + b, 0)], // Sum of income
+                        data: [monthlyTransactions.income.reduce((a, b) => a + b, 0)], 
                         backgroundColor: '#900F8C'
                       },
                       {
                         label: 'Расходы',
-                        data: [monthlyTransactions.expenses.reduce((a, b) => a + b, 0)], // Sum of expenses
+                        data: [monthlyTransactions.expenses.reduce((a, b) => a + b, 0)], 
                         backgroundColor: '#11DCC4'
                       }
                     ]
@@ -337,7 +330,6 @@ const Home = () => {
                     data: Object.values(expensesByCategory),
                     backgroundColor: ['#0AFB60', '#9D00C6', '#F04579', '#00FFED', '#FFE031'],
                     borderRadius: 10,
-
                     hoverBackgroundColor: ['#0AFB60', '#9D00C6', '#F04579', '#00FFED', '#FFE031']
                   }]
                 }} />
